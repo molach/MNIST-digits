@@ -1,0 +1,122 @@
+% Program to use an artificial neural network to recognize the handwritten digits 0-9.
+% Requires the MNIST trainig set, available at http://yann.lecun.com/exdb/mnist/.
+% Specifically, it needs the following 2 files: "train-images-idx3-ubyte.gz" and "train-labels-idx1-ubyte.gz".
+% After downloading the files from the web page, run (on Linux or Cygwin) "gunzip <name-of-file>.gz" to unzip each .gz file.
+% Then this program can create "digits.train", which will be in the proper FANN format, and which it can then use to train a NN.
+
+import ann.
+
+main =>
+	println("How many examples do you want to use in your training file (no more than 60,000)?"),
+	Num_examples = read_int(),
+	while (Num_examples > 60000)
+		println("No more than 60,000 examples:"),
+		Num_examples := read_int()
+	end,
+
+	println("Enter 1 or 10 for the number of outputs (i.e, either 1 or 10 output nodes):"),
+	Num_outputs = read_int(),
+	while (Num_outputs != 1 && Num_outputs != 10)
+		println("Either 1 or 10 outputs:"),
+		Num_outputs := read_int()
+	end,
+
+	format_training_file(Num_examples, Num_outputs),
+
+	train(Num_outputs).
+
+
+
+format_training_file(Num_examples, Num_outputs) =>
+	Input_images = open("train-images-idx3-ubyte"),
+	Input_tags = open("train-labels-idx1-ubyte"),
+	Output = open("digits.train", write),
+
+%	println("Images file gunk:"),
+%	println("Magic number:"),
+%	Byte = 0,
+%	foreach(I in 1..4)
+%		Byte := read_byte(Input_images),
+%		println(Byte)
+%	end,
+%	println("Number of images:"),
+%	foreach(I in 1..4)
+%		Byte := read_byte(Input_images),
+%		println(Byte)
+%	end,
+%	println("Number of rows:"),
+%	foreach(I in 1..4)
+%		Byte := read_byte(Input_images),
+%		println(Byte)
+%	end,
+%	println("Number of columns:"),
+%	foreach(I in 1..4)
+%		Byte := read_byte(Input_images),
+%		println(Byte)
+%	end,
+%
+%	println("Tags file gunk:"),
+%	println("Magic number:"),
+%	foreach(I in 1..4)
+%		Byte := read_byte(Input_tags),
+%		println(Byte)
+%	end,
+%	println("Number of items:"),
+%	foreach(I in 1..4)
+%		Byte := read_byte(Input_tags),
+%		println(Byte)
+%	end,
+	
+	% Discard irrelevant information at the beginning of the MNIST files.
+	foreach(I in 1..16) Byte := read_byte(Input_images) end, 
+	foreach(I in 1..8) Byte := read_byte(Input_tags) end,
+
+	println(Output, Num_examples),
+	println(Output, 784),
+	println(Output, Num_outputs),
+	println(Output, " "),
+
+	foreach(I in 1..Num_examples)
+		foreach(J in 1..784)
+			Byte := read_byte(Input_images),
+			print(Output, Byte), 
+			print(Output, " ")
+		end, 
+		println(Output, " "),
+		Byte := read_byte(Input_tags),
+		if Num_outputs == 1 then
+			println(Output, Byte)
+		else
+			if Byte == 0 then println(Output, "1 -1 -1 -1 -1 -1 -1 -1 -1 -1")
+			elseif Byte == 1 then println(Output, "-1 1 -1 -1 -1 -1 -1 -1 -1 -1")
+			elseif Byte == 2 then println(Output, "-1 -1 1 -1 -1 -1 -1 -1 -1 -1")
+			elseif Byte == 3 then println(Output, "-1 -1 -1 1 -1 -1 -1 -1 -1 -1")
+			elseif Byte == 4 then println(Output, "-1 -1 -1 -1 1 -1 -1 -1 -1 -1")
+			elseif Byte == 5 then println(Output, "-1 -1 -1 -1 -1 1 -1 -1 -1 -1")
+			elseif Byte == 6 then println(Output, "-1 -1 -1 -1 -1 -1 1 -1 -1 -1")
+			elseif Byte == 7 then println(Output, "-1 -1 -1 -1 -1 -1 -1 1 -1 -1")
+			elseif Byte == 8 then println(Output, "-1 -1 -1 -1 -1 -1 -1 -1 1 -1")
+			elseif Byte == 9 then println(Output, "-1 -1 -1 -1 -1 -1 -1 -1 -1 1")
+			end
+		end,
+		println(Output, " ")
+	end,
+
+	close(Input_images),
+	close(Input_tags),
+	close(Output).
+
+
+
+train(Num_outputs) =>
+	AnnDef = [$layer(784), 
+		  $layer(784, [$func(sigmoid)]), 
+		  $layer(784, [$func(sigmoid)]),
+	%	  $layer(784, [$func(sigmoid)]),
+		  $layer(Num_outputs, [$func(linear)])],
+	Opts = $[train_func(train_rprop), maxep(1000), report(10), derror(0.1)],
+	Ann = nn_train(AnnDef, "digits.train", Opts),
+	nn_save(Ann, "digits.net"),
+	nn_destroy_all().
+
+
