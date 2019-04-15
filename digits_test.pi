@@ -97,8 +97,8 @@ nn_test2(Ann, Data) =>
 	foreach(I in 0..(L - 1))
 		nn_get_data(Data, I, In, Out),
 		Res = nn_predict(Ann, In, [$scaleIn(1), $scaleOut(-1), resetMSE]),
-		Prediction = index_of_max(Res),
-		Correct_answer = index_of_max(Out),
+		Prediction = index_of_max(Res) - 1,
+		Correct_answer = index_of_max(Out) - 1,
 		if Prediction == Correct_answer then 
 			println("Correct result")
 		else
