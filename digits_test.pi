@@ -5,7 +5,7 @@ main =>
 	Ann = nn_load("digits.net"),
 
 	bp.pi_fann_print_parameters(Ann),
-	println(),
+	println(" "),
 	println("How many output neurons does the NN have? (look about 40 lines above in the terminal)"),
 	Num_outputs = read_int(),
 
